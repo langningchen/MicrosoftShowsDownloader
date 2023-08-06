@@ -14,13 +14,32 @@ string VTTToLRC(string Input)
     Output.erase(0, 1);
     return Output;
 }
-int main()
+int main(int argc, char **argv)
 {
     CLN_TRY
+    string ShowName = "";
+    int Choice = 0;
+    for (int i = 1; i < argc; i++)
+    {
+        string Argument = argv[i];
+        string NextArgument = i + 1 == argc ? "" : argv[i + 1];
+        if (Argument == "-u" || Argument == "--username")
+        {
+            ShowName = NextArgument;
+            i++;
+        }
+        else if (Argument == "-p" || Argument == "--password")
+        {
+            Choice = stoi(NextArgument);
+            i++;
+        }
+        else
+            TRIGGER_ERROR("Unknown option \"" + Argument + "\"");
+    }
+    if (ShowName == "")
+        TRIGGER_ERROR("No username provided");
+
     // string ShowName = "tabs-vs-spaces";
-    string ShowName;
-    cout << "Please input the name of the show you want to download:  " << flush;
-    cin >> ShowName;
     GetDataToFile("https://learn.microsoft.com/api/contentbrowser/search/shows/" + ShowName + "/episodes" +
                   "?locale=en-us" +
                   "&facet=languages" +
@@ -33,18 +52,13 @@ int main()
         Counter++;
         cout << (Counter < 10 ? "0" : "") << Counter << " " << i["title"].as_string() << endl;
     }
-    cout << "Please input the id of the video you want to download:  " << flush;
-    int Choice = 0;
-#ifdef TEST
-    Choice = 1;
-    cout << 1 << endl;
-#else
-    cin >> Choice;
-#endif
-    if (Choice > Counter || Choice < 1)
+    if (Choice == 0)
     {
-        TRIGGER_ERROR("Input invalid");
+        cout << "Please input the id of the video you want to download:  " << flush;
+        cin >> Choice;
     }
+    if (Choice > Counter || Choice < 1)
+        TRIGGER_ERROR("Input invalid");
     string Name = JSONData["results"][Choice - 1]["title"].as_string();
     string EntryID = JSONData["results"][Choice - 1]["entry_id"].as_string();
     GetDataToFile(string("https://learn.microsoft.com/api/video/public/v1/entries/" + EntryID));
@@ -91,8 +105,5 @@ int main()
                                 Name + ".vtt")));
     remove((CurrentDir + Name + ".vtt").c_str());
     cout << "Success" << endl;
-#ifdef TEST
-    OutputSummary("Success");
-#endif
     CLN_CATCH return 0;
 }
