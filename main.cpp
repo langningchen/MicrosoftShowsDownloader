@@ -1,5 +1,4 @@
 #include "Curl.hpp"
-extern string CurrentDir;
 string VTTToLRC(string Input)
 {
     vector<string> Lines = SpiltString(StringReplaceAll(Input, "\r", ""), "\n");
@@ -23,12 +22,12 @@ int main(int argc, char **argv)
     {
         string Argument = argv[i];
         string NextArgument = i + 1 == argc ? "" : argv[i + 1];
-        if (Argument == "-u" || Argument == "--username")
+        if (Argument == "-s" || Argument == "--show-name")
         {
             ShowName = NextArgument;
             i++;
         }
-        else if (Argument == "-p" || Argument == "--password")
+        else if (Argument == "-c" || Argument == "--choice")
         {
             Choice = stoi(NextArgument);
             i++;
@@ -39,7 +38,6 @@ int main(int argc, char **argv)
     if (ShowName == "")
         TRIGGER_ERROR("No username provided");
 
-    // string ShowName = "tabs-vs-spaces";
     GetDataToFile("https://learn.microsoft.com/api/contentbrowser/search/shows/" + ShowName + "/episodes" +
                   "?locale=en-us" +
                   "&facet=languages" +
@@ -83,13 +81,12 @@ int main(int argc, char **argv)
     cout << "Success" << endl;
     cout << "Changing video format... " << flush;
     if (system(("ffmpeg -y -hide_banner -loglevel error -i "s +
-                "\"" + CurrentDir + Name + ".mp4\" " +
-                "\"" + CurrentDir + Name + ".mp3\"")
+                "\"" + Name + ".mp4\" " +
+                "\"" + Name + ".mp3\"")
                    .c_str()))
     {
         TRIGGER_ERROR("Change video to audio failed");
     }
-    // remove((CurrentDir + Name + ".mp4").c_str());
     cout << "Success" << endl;
     cout << "Downloading subtitle... " << flush;
     for (json::iterator jit = JSONData["publicVideo"]["captions"].begin(); jit != JSONData["publicVideo"]["captions"].end(); jit++)
@@ -103,7 +100,6 @@ int main(int argc, char **argv)
     SetDataFromStringToFile(Name + ".lrc",
                             VTTToLRC(GetDataFromFileToString(
                                 Name + ".vtt")));
-    remove((CurrentDir + Name + ".vtt").c_str());
     cout << "Success" << endl;
     CLN_CATCH return 0;
 }
